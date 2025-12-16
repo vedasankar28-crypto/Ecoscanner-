@@ -2,6 +2,7 @@ import streamlit as st
 import random
 from PIL import Image
 from pyzbar.pyzbar import decode
+import numpy as np # <--- NEW: Import numpy for image processing
 
 # ---------------- MOCK PRODUCT DATABASE ----------------
 # Use the first few digits of a barcode as the key for the demo
@@ -111,7 +112,6 @@ CSS = """
 st.markdown(CSS, unsafe_allow_html=True)
 
 # ---------------- SESSION STATE ----------------
-# THIS SECTION IS CLEANED TO REMOVE U+00A0 CHARACTERS
 for key in ["achievements", "leaderboard", "music_played"]:
     if key not in st.session_state:
         st.session_state[key] = []
@@ -136,8 +136,14 @@ with tabs[0]:
     image = st.camera_input("Scan barcode using your mobile camera")
 
     if image:
-        img = Image.open(image)
-        barcodes = decode(img)
+        # 1. Open image using PIL
+        img_pil = Image.open(image)
+        
+        # 2. Convert PIL image to a NumPy array for pyzbar compatibility
+        img_np = np.array(img_pil) 
+        
+        # 3. Decode the barcode from the NumPy array
+        barcodes = decode(img_np)
 
         if barcodes:
             for barcode in barcodes:
@@ -195,7 +201,6 @@ with tabs[1]:
         st.write(f"🌱 Score: **{score}/100**")
 
         if score >= 75:
-            # Added space to separate it from the previous line and prevent hidden chars
             st.session_state["achievements"].append("Eco Friendly Choice 🌿")
             st.balloons()
 
@@ -237,4 +242,3 @@ with tabs[3]:
             st.success(a)
     else:
         st.info("No achievements yet. Start scanning!")
-
